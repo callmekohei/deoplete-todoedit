@@ -17,9 +17,10 @@ class Source(Base):
         self.filetypes = ['todoedit']
 
         # input pattern
-        context   = [ r'(@|@\S)' ]
-        folder    = [ r'(\+|\+\S)' ]
-        self.input_pattern = '|'.join( context + folder )
+        context    = [ r'^@|(?<=\s)@' ]
+        folder     = [ r'^\+|(?<=\s)\+' ]
+        subfolder  = [ r'^\+\+|(?<=\s)\+\+' ]
+        self.input_pattern = '|'.join( context + folder + subfolder )
 
     def get_complete_position(self, context):
         m = re.search(r'\w*$', context['input'])
@@ -27,21 +28,13 @@ class Source(Base):
 
     def gather_candidates(self, context):
 
-        if context['input'][0] == '@':
-
+        last = context['input'].split(' ')[-1]
+        if len(last) == 2 :
+            return self.mySubFolder()
+        elif last == '@':
             return self.myContext()
-
-        elif context['input'][0] == '+':
-
-            if len(context['input']) == 1:
-                return self.myFolder()
-            else:
-                if context['input'][1] == '+':
-                    return self.mySubFolder()
-                else:
-                    return self.myFolder()
         else:
-            pass
+            return self.myFolder()
 
     def mySubFolder(self):
 
@@ -50,7 +43,6 @@ class Source(Base):
         bufferContexts = list( map(lambda x : x.replace('++','') , l) )
 
         return sorted( list( set( bufferContexts )) )
-
 
     def myFolder(self):
 
