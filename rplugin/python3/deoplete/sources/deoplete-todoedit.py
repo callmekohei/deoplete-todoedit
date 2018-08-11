@@ -29,41 +29,30 @@ class Source(Base):
     def gather_candidates(self, context):
 
         last = context['input'].split(' ')[-1]
+
         if len(last) == 2 :
-            return self.mySubFolder()
+
+            bufferSubfolder = self.myFoo( r'\+\+\S+', '++' )
+            return sorted( list( set( bufferSubfolder )) )
+
         elif last == '@':
-            return self.myContext()
+
+            s = self.vim.eval('g:deoplete_todoedit_defaultContext')
+            l = re.split('[" ",","]',s)
+            defaultContext = list(filter(lambda x : x != '', l ))
+            bufferContext = self.myFoo( r'@\S+' , '@' )
+            return sorted( list( set( defaultContext + bufferContext )) )
+
         else:
-            return self.myFolder()
 
-    def mySubFolder(self):
+            s = self.vim.eval("g:deoplete_todoedit_defaultFolder")
+            l = re.split('[" ",","]',s)
+            defaultFolder = list(filter(lambda x : x != '', l ))
+            bufferFolder = self.myFoo( r'(?<!\+)\+(\w+|\d+)' , '+' )
+            return sorted( list( set( defaultFolder + bufferFolder )) )
 
-        s = '\n'.join( getlines( self.vim ) )
-        l = re.findall( r'\+\+\S+', s )
-        bufferContexts = list( map(lambda x : x.replace('++','') , l) )
-
-        return sorted( list( set( bufferContexts )) )
-
-    def myFolder(self):
-
-        tmp = self.vim.eval("g:deoplete_todoedit_defaultFolder")
-        tmp = re.split('[" ",","]',tmp)
-        defaultFolder = list(filter(lambda x : x != '', tmp ))
+    def myFoo(self,regex,tag):
 
         s = '\n'.join( getlines( self.vim ) )
-        l = re.findall( r'(?<!\+)\+(\w+|\d+)' , s )
-        bufferFolder = list( map(lambda x : x.replace('+','') , l) )
-
-        return sorted( list( set( defaultFolder + bufferFolder )) )
-
-    def myContext(self):
-
-        tmp = self.vim.eval('g:deoplete_todoedit_defaultContext')
-        tmp = re.split('[" ",","]',tmp)
-        defaultContext = list(filter(lambda x : x != '', tmp ))
-
-        s = '\n'.join( getlines( self.vim ) )
-        l = re.findall( r'@\S+', s )
-        bufferContext = list( map(lambda x : x.replace('@','') , l) )
-
-        return sorted( list( set( defaultContext + bufferContext )) )
+        l = re.findall( regex, s )
+        return list( map(lambda x : x.replace( tag ,'') , l) )
